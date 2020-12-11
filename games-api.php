@@ -278,7 +278,6 @@ function updateGame($id, $data) {
                 'meta_input'   => array(
                                             'game_name' => $data['data']['presentation']['gameName']['*'] ?? null,
                                             'game_id' => $data['id'] ?? null,
-                                            'game_categories' => implode(',', $data['date']['categories']) ?? null,
                                             'new_game' => isThisNew($data['data']['creation']['time']) ?? null,
                                             'game_vendor' => $data['data']['creation']['time'],
                                             'game_provider' => $data['data']['vendorDisplayName'],
@@ -310,9 +309,16 @@ function importGames() {
     
     $response = curl_exec($curl);
     
-    curl_close($curl);
+	curl_close($curl);
 
+	$response = str_replace(array("\n\r", "\n", "\r"), "", $response);
+	$response = "[" . str_replace("}{", "},{", $response) . "]";
+	
     $array = json_decode( $response, true );
+
+    $fp = fopen('debugdecode.txt', 'w');  
+    fwrite($fp, gettype($array));  
+    fclose($fp);
 
     if(is_array($array)){
 
@@ -321,14 +327,15 @@ function importGames() {
         $result = checkIfGameExists($game['id']);
         
             if ($result == false) {
-                createGame($vehicle);
+                createGame($game);
             }
             else {
-                updateGame($result, $vehicle);
+                updateGame($result, $game);
             }
     }
     }
 }
+
 
 add_action( 'do_synchronize_games_3wm', 'importGames' );
 
